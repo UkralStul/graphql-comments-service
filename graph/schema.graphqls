@@ -1,0 +1,68 @@
+scalar Time
+
+type Post {
+    id: ID!
+    title: String!
+    content: String!
+    authorId: String!
+    commentsEnabled: Boolean!
+    createdAt: Time!
+    # Пагинированный список комментариев верхнего уровня
+    comments(limit: Int = 10, cursor: ID): CommentConnection!
+}
+
+type Comment {
+    id: ID!
+    postId: ID!
+    authorId: String!
+    content: String!
+    createdAt: Time!
+    # Родительский комментарий
+    parent: Comment
+    # Дочерние комментарии (также с пагинацией)
+    children(limit: Int = 5, cursor: ID): CommentConnection!
+}
+
+# Структуры для пагинации
+type CommentConnection {
+    edges: [CommentEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CommentEdge {
+    cursor: ID!
+    node: Comment!
+}
+
+type PageInfo {
+    hasNextPage: Boolean!
+    endCursor: ID
+}
+
+type Query {
+    posts(limit: Int = 10, offset: Int = 0): [Post!]!
+    post(id: ID!): Post
+}
+
+input NewPost {
+    title: String!
+    content: String!
+    authorId: String!
+}
+
+input NewComment {
+    postId: ID!
+    parentId: ID # Может быть null для комментариев верхнего уровня
+    authorId: String!
+    content: String!
+}
+
+type Mutation {
+    createPost(input: NewPost!): Post!
+    toggleComments(postId: ID!, enable: Boolean!): Post!
+    createComment(input: NewComment!): Comment!
+}
+
+type Subscription {
+    commentAdded(postId: ID!): Comment!
+}
